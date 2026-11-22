@@ -1,0 +1,50 @@
+name: Build Release APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler python3-protobuf python3-pip nasm
+          pip3 install --user protobuf
+
+      - name: Build release APK
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --stacktrace
+
+      - name: Sign APK
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > chiaki.jks
+          BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
+          APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
+          "$ANDROID_HOME/build-tools/$BT/apksigner" sign \
+            --ks chiaki.jks --ks-key-alias chiaki \
+            --ks-pass env:KEYSTORE_PASSWORD \
+            --out chiaki-release-signed.apk "$APK"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chiaki-release-apk
+          path: chiaki-release-signed.apk
