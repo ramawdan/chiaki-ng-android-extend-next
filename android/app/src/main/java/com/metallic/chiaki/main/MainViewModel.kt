@@ -26,20 +26,34 @@ class MainViewModel(val database: AppDatabase, val preferences: Preferences): Vi
 	}
 
 	val displayHosts = Observables.combineLatest(
-			database.manualHostDao().getAll().toObservable(),
-			database.registeredHostDao().getAll().toObservable(),
-			discoveryManager.discoveredHosts)
-			{ manualHosts, registeredHosts, discoveredHosts ->
-				val macRegisteredHosts = registeredHosts.associateBy { it.serverMac }
-				val idRegisteredHosts = registeredHosts.associateBy { it.id }
-				discoveredHosts.map {
-					DiscoveredDisplayHost(it.serverMac?.let { mac -> macRegisteredHosts[mac] }, it)
-				} +
-				manualHosts.map {
-					ManualDisplayHost(it.registeredHost?.let { id -> idRegisteredHosts[id] }, it)
-				}
-			}
-			.toLiveData()
+        database.manualHostDao().getAll().toObservable(),
+        database.registeredHostDao().getAll().toObservable(),
+        discoveryManager.discoveredHosts)
+        { manualHosts, registeredHosts, discoveredHosts ->
+            val macRegisteredHosts = registeredHosts.associateBy { it.serverMac }
+            val idRegisteredHosts = registeredHosts.associateBy { it.id }
+
+            val discovered = discoveredHosts.map {
+                DiscoveredDisplayHost(it.serverMac?.let { mac -> macRegisteredHosts[mac] }, it)
+            }
+            val manual = manualHosts.map {
+                ManualDisplayHost(it.registeredHost?.let { id -> idRegisteredHosts[id] }, it)
+            }
+
+            // ids of registered hosts that are already visible
+            val shownIds = HashSet<Any>()
+            discoveredHosts.forEach { d ->
+                d.serverMac?.let { mac -> macRegisteredHosts[mac] }?.let { shownIds.add(it.id) }
+            }
+            manualHosts.forEach { m -> m.registeredHost?.let { shownIds.add(it) } }
+
+            val saved = registeredHosts
+                .filter { it.id !in shownIds }
+                .map { RegisteredDisplayHost(it) }   // new type, see below
+
+            discovered + manual + saved
+        }
+        .toLiveData()
 
 	val discoveryActive = discoveryManager.discoveryActive.toLiveData()
 
