@@ -105,6 +105,7 @@
     <string name="registered_hosts_empty_info">No Consoles registered.</string>
     <string name="display_hosts_empty_discovery_off_info">No consoles added yet.\nEnable Discovery to automatically find consoles on your local network.</string>
     <string name="display_hosts_empty_discovery_on_info">No consoles added or discovered.</string>
+    <string name="alert_message_host_offline">This console is registered but was not found on the network. Make sure it is turned on (or in rest mode) and on the same network, or add it manually by IP address.</string>
 
     <!-- Don't localize these -->
     <string name="preferences_discovery_enabled_key">discovery_enabled</string>
