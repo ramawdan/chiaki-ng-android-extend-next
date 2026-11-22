@@ -16,7 +16,7 @@ import javax.microedition.khronos.opengles.GL10
 import kotlin.random.Random
 import java.util.concurrent.atomic.AtomicInteger
 
-private val pendingFrames = AtomicInteger(0)
+private val pendingFrames = java.util.concurrent.atomic.AtomicInteger(0)
 var frameCallback: (() -> Unit)? = null
 
 /**
@@ -227,7 +227,7 @@ class DebandRenderer(
         android.opengl.Matrix.setIdentityM(stMatrix, 0)
     }
 
-    override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+    override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {        
         surface?.release()
         surfaceTexture?.release()
         
@@ -302,7 +302,7 @@ class DebandRenderer(
         val n = pendingFrames.getAndSet(0)
         if (n > 0) {
             try {
-                repeat(n) { surfaceTexture?.updateTexImage() }   // drain queue to newest
+                repeat(n) { surfaceTexture?.updateTexImage() }
                 surfaceTexture?.getTransformMatrix(stMatrix)
             } catch (e: IllegalStateException) {
                 Log.w(TAG, "updateTexImage failed", e)
@@ -359,7 +359,7 @@ class DebandRenderer(
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
         pendingFrames.incrementAndGet()
         frameCallback?.invoke()
-    }
+    }    
 
     fun release() {
         surface?.release()
