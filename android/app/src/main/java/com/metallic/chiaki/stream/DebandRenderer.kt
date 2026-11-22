@@ -16,9 +16,6 @@ import javax.microedition.khronos.opengles.GL10
 import kotlin.random.Random
 import java.util.concurrent.atomic.AtomicInteger
 
-private val pendingFrames = java.util.concurrent.atomic.AtomicInteger(0)
-var frameCallback: (() -> Unit)? = null
-
 /**
  * GLSurfaceView.Renderer that applies debanding shader to video frames.
  * Uses SurfaceTexture to receive frames from MediaCodec and renders them
@@ -221,6 +218,8 @@ class DebandRenderer(
     private var screenWidth = 1
     private var screenHeight = 1
 
+    private val pendingFrames = java.util.concurrent.atomic.AtomicInteger(0)
+    var frameCallback: (() -> Unit)? = null
     private var frameCount = 0f
 
     init {
