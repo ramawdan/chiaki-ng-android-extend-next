@@ -168,6 +168,16 @@ class MainActivity : AppCompatActivity()
 
 	private fun hostTriggered(host: DisplayHost)
 	{
+		if(host is RegisteredDisplayHost)
+		{
+			MaterialAlertDialogBuilder(this)
+				.setMessage(R.string.alert_message_host_offline)
+				.setPositiveButton(android.R.string.ok) { _, _ -> }
+				.create()
+				.show()
+			return
+		}
+		
 		val registeredHost = host.registeredHost
 		if(registeredHost != null)
 		{
@@ -210,10 +220,12 @@ class MainActivity : AppCompatActivity()
 
 	private fun wakeupHost(host: DisplayHost)
 	{
+		if(host.host.isEmpty())
+			return
 		val registeredHost = host.registeredHost ?: return
 		viewModel.discoveryManager.sendWakeup(host.host, registeredHost.rpRegistKey, registeredHost.target.isPS5)
 	}
-
+	
 	private fun editHost(host: DisplayHost)
 	{
 		if(host !is ManualDisplayHost)
