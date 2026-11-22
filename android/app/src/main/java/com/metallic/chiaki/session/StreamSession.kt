@@ -40,12 +40,10 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 
 	fun shutdown()
 	{
-		session?.stop()
-		session?.dispose()
-		session = null
-		surface = null
-		_state.value = StreamStateIdle
-		//surfaceTexture?.release()
+	    session?.stop()
+	    session?.dispose()
+	    session = null
+	    _state.value = StreamStateIdle
 	}
 
 	fun pause()
