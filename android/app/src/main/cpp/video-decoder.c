@@ -13,6 +13,9 @@
 #define INPUT_BUFFER_TIMEOUT_MS 10
 
 static void *android_chiaki_video_decoder_output_thread_func(void *user);
+AMediaFormat_setInt32(format, "low-latency", 1);       // API 30+, ignored on older devices
+AMediaFormat_setInt32(format, "priority", 0);          // 0 = realtime
+AMediaFormat_setInt32(format, "operating-rate", 120);  // run the codec at full speed
 
 ChiakiErrorCode
 android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *decoder,
@@ -31,25 +34,30 @@ android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *decoder,
 static void kill_decoder(AndroidChiakiVideoDecoder *decoder) {
   chiaki_mutex_lock(&decoder->codec_mutex);
   decoder->shutdown_output = true;
-  ssize_t codec_buf_index =
-      AMediaCodec_dequeueInputBuffer(decoder->codec, 1000);
-  if (codec_buf_index >= 0) {
+  ssize_t idx = AMediaCodec_dequeueInputBuffer(decoder->codec, 1000);
+  if (idx >= 0) {
     CHIAKI_LOGI(decoder->log, "Video Decoder sending EOS buffer");
-    AMediaCodec_queueInputBuffer(decoder->codec, (size_t)codec_buf_index, 0, 0,
+    AMediaCodec_queueInputBuffer(decoder->codec, (size_t)idx, 0, 0,
                                  decoder->timestamp_cur++,
                                  AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM);
-    AMediaCodec_stop(decoder->codec);
-    chiaki_mutex_unlock(&decoder->codec_mutex);
-    chiaki_thread_join(&decoder->output_thread, NULL);
   } else {
     CHIAKI_LOGE(decoder->log,
                 "Failed to get input buffer for shutting down Video Decoder!");
-    AMediaCodec_stop(decoder->codec);
-    chiaki_mutex_unlock(&decoder->codec_mutex);
   }
+  AMediaCodec_stop(decoder->codec);
+  chiaki_mutex_unlock(&decoder->codec_mutex);
+
+  chiaki_thread_join(&decoder->output_thread, NULL); // always join
+
+  chiaki_mutex_lock(&decoder->codec_mutex);
   AMediaCodec_delete(decoder->codec);
   decoder->codec = NULL;
+  if (decoder->window) {
+    ANativeWindow_release(decoder->window);
+    decoder->window = NULL;
+  }
   decoder->shutdown_output = false;
+  chiaki_mutex_unlock(&decoder->codec_mutex);
 }
 
 void android_chiaki_video_decoder_fini(AndroidChiakiVideoDecoder *decoder) {
@@ -60,10 +68,11 @@ void android_chiaki_video_decoder_fini(AndroidChiakiVideoDecoder *decoder) {
 
 void android_chiaki_video_decoder_set_surface(
     AndroidChiakiVideoDecoder *decoder, JNIEnv *env, jobject surface) {
-  chiaki_mutex_lock(&decoder->codec_mutex);
-
   if (!surface) {
-    if (decoder->codec) {
+    chiaki_mutex_lock(&decoder->codec_mutex);
+    bool has_codec = decoder->codec != NULL;
+    chiaki_mutex_unlock(&decoder->codec_mutex);
+    if (has_codec) {
       kill_decoder(decoder);
       CHIAKI_LOGI(decoder->log, "Decoder shut down after surface was removed");
     }
