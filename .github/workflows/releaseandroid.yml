@@ -29,7 +29,14 @@ jobs:
         working-directory: android
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleRelease --stacktrace
+          set +e
+          ./gradlew assembleRelease --stacktrace > build.log 2>&1
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "=== BUILD FAILED, key lines ==="
+            grep -nE "error:|FAILED|What went wrong|Execution failed|Caused by" -A6 build.log | grep -v "warning:" | head -120
+          fi
+          exit $STATUS
 
       - name: Sign APK
         env:
