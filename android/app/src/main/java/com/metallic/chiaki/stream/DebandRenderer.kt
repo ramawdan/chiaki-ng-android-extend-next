@@ -14,6 +14,10 @@ import java.nio.FloatBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import kotlin.random.Random
+import java.util.concurrent.atomic.AtomicInteger
+
+private val pendingFrames = AtomicInteger(0)
+var frameCallback: (() -> Unit)? = null
 
 /**
  * GLSurfaceView.Renderer that applies debanding shader to video frames.
@@ -217,8 +221,6 @@ class DebandRenderer(
     private var screenWidth = 1
     private var screenHeight = 1
 
-    @Volatile
-    private var frameAvailable = false
     private var frameCount = 0f
 
     init {
@@ -226,6 +228,9 @@ class DebandRenderer(
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+        surface?.release()
+        surfaceTexture?.release()
+        
         // 1. Create copy program
         copyProgram = createProgram(COPY_VERTEX_SHADER, COPY_FRAGMENT_SHADER)
         aCopyPosLoc = GLES30.glGetAttribLocation(copyProgram, "a_Position")
@@ -294,10 +299,14 @@ class DebandRenderer(
     }
 
     override fun onDrawFrame(gl: GL10?) {
-        if (frameAvailable) {
-            surfaceTexture?.updateTexImage()
-            surfaceTexture?.getTransformMatrix(stMatrix)
-            frameAvailable = false
+        val n = pendingFrames.getAndSet(0)
+        if (n > 0) {
+            try {
+                repeat(n) { surfaceTexture?.updateTexImage() }   // drain queue to newest
+                surfaceTexture?.getTransformMatrix(stMatrix)
+            } catch (e: IllegalStateException) {
+                Log.w(TAG, "updateTexImage failed", e)
+            }
         }
 
         // --- PASS 1: OES to FBO ---
@@ -348,7 +357,8 @@ class DebandRenderer(
     }
 
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
-        frameAvailable = true
+        pendingFrames.incrementAndGet()
+        frameCallback?.invoke()
     }
 
     fun release() {
