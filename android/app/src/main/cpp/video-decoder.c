@@ -13,9 +13,6 @@
 #define INPUT_BUFFER_TIMEOUT_MS 10
 
 static void *android_chiaki_video_decoder_output_thread_func(void *user);
-AMediaFormat_setInt32(format, "low-latency", 1);       // API 30+, ignored on older devices
-AMediaFormat_setInt32(format, "priority", 0);          // 0 = realtime
-AMediaFormat_setInt32(format, "operating-rate", 120);  // run the codec at full speed
 
 ChiakiErrorCode
 android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *decoder,
@@ -113,6 +110,9 @@ void android_chiaki_video_decoder_set_surface(
   AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_WIDTH, decoder->target_width);
   AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_HEIGHT,
                         decoder->target_height);
+  AMediaFormat_setInt32(format, "low-latency", 1);
+  AMediaFormat_setInt32(format, "priority", 0);
+  AMediaFormat_setInt32(format, "operating-rate", 120);
 
   media_status_t r =
       AMediaCodec_configure(decoder->codec, format, decoder->window, NULL, 0);
