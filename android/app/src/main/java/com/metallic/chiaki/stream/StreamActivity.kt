@@ -33,7 +33,6 @@ private sealed class DialogContents
 private object StreamQuitDialog: DialogContents()
 private object CreateErrorDialog: DialogContents()
 private object PinRequestDialog: DialogContents()
-private var wifiLock: WifiManager.WifiLock? = null
 
 class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListener
 {
@@ -119,6 +118,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	}
 
 	private var debandRenderer: DebandRenderer? = null
+	private var wifiLock: WifiManager.WifiLock? = null
 
 	private fun setupVideoOutput() {
 	    val prefs = Preferences(this)
@@ -128,17 +128,17 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	        // Use GLSurfaceView with debanding shader
 	        binding.surfaceView.visibility = View.GONE
 	        binding.debandSurfaceView.visibility = View.VISIBLE
-	
+
 	        debandRenderer = DebandRenderer { surface ->
 	            viewModel.session.attachToSurface(surface)
 	        }
-	
+	        debandRenderer!!.frameCallback = { binding.debandSurfaceView.requestRender() }
+	        debandRenderer!!.sharpness = prefs.sharpnessIntensity
+
 	        binding.debandSurfaceView.setEGLContextClientVersion(3)
 	        binding.debandSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 0, 0)
 	        binding.debandSurfaceView.holder.setFormat(android.graphics.PixelFormat.RGBA_8888)
 	        binding.debandSurfaceView.setRenderer(debandRenderer)
-	        debandRenderer!!.sharpness = prefs.sharpnessIntensity
-	        binding.debandSurfaceView.renderMode = android.opengl.GLSurfaceView.RENDERMODE_CONTINUOUSLY
 	        binding.debandSurfaceView.renderMode = android.opengl.GLSurfaceView.RENDERMODE_WHEN_DIRTY
 	    } else {
 	        // Use standard SurfaceView (no shader processing)
