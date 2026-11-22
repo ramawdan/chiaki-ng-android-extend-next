@@ -121,6 +121,11 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	private var debandRenderer: DebandRenderer? = null
 
 	private fun setupVideoOutput() {
+		binding.debandSurfaceView.setRenderer(debandRenderer)
+		debandRenderer!!.sharpness = prefs.sharpnessIntensity
+		debandRenderer!!.frameCallback = { binding.debandSurfaceView.requestRender() }
+		binding.debandSurfaceView.renderMode = android.opengl.GLSurfaceView.RENDERMODE_WHEN_DIRTY
+		
 		val prefs = Preferences(this)
 		viewModel.session.detachSurface()
 		
