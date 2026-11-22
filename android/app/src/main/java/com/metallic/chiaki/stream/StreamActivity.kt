@@ -121,35 +121,31 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	private var debandRenderer: DebandRenderer? = null
 
 	private fun setupVideoOutput() {
-		binding.debandSurfaceView.setRenderer(debandRenderer)
-		debandRenderer!!.sharpness = prefs.sharpnessIntensity
-		debandRenderer!!.frameCallback = { binding.debandSurfaceView.requestRender() }
-		binding.debandSurfaceView.renderMode = android.opengl.GLSurfaceView.RENDERMODE_WHEN_DIRTY
-		
-		val prefs = Preferences(this)
-		viewModel.session.detachSurface()
-		
-		if (prefs.debandingEnabled) {
-			// Use GLSurfaceView with debanding shader
-			binding.surfaceView.visibility = View.GONE
-			binding.debandSurfaceView.visibility = View.VISIBLE
-			
-			debandRenderer = DebandRenderer { surface ->
-				viewModel.session.attachToSurface(surface)
-			}
-			
-			binding.debandSurfaceView.setEGLContextClientVersion(3)
-			binding.debandSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 0, 0)
-			binding.debandSurfaceView.holder.setFormat(android.graphics.PixelFormat.RGBA_8888)
-			binding.debandSurfaceView.setRenderer(debandRenderer)
-			debandRenderer!!.sharpness = prefs.sharpnessIntensity
-			binding.debandSurfaceView.renderMode = android.opengl.GLSurfaceView.RENDERMODE_CONTINUOUSLY
-		} else {
-			// Use standard SurfaceView (no shader processing)
-			binding.surfaceView.visibility = View.VISIBLE
-			binding.debandSurfaceView.visibility = View.GONE
-			viewModel.session.attachToSurfaceView(binding.surfaceView)
-		}
+	    val prefs = Preferences(this)
+	    viewModel.session.detachSurface()
+	
+	    if (prefs.debandingEnabled) {
+	        // Use GLSurfaceView with debanding shader
+	        binding.surfaceView.visibility = View.GONE
+	        binding.debandSurfaceView.visibility = View.VISIBLE
+	
+	        debandRenderer = DebandRenderer { surface ->
+	            viewModel.session.attachToSurface(surface)
+	        }
+	
+	        binding.debandSurfaceView.setEGLContextClientVersion(3)
+	        binding.debandSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 0, 0)
+	        binding.debandSurfaceView.holder.setFormat(android.graphics.PixelFormat.RGBA_8888)
+	        binding.debandSurfaceView.setRenderer(debandRenderer)
+	        debandRenderer!!.sharpness = prefs.sharpnessIntensity
+	        debandRenderer!!.frameCallback = { binding.debandSurfaceView.requestRender() }
+	        binding.debandSurfaceView.renderMode = android.opengl.GLSurfaceView.RENDERMODE_WHEN_DIRTY
+	    } else {
+	        // Use standard SurfaceView (no shader processing)
+	        binding.surfaceView.visibility = View.VISIBLE
+	        binding.debandSurfaceView.visibility = View.GONE
+	        viewModel.session.attachToSurfaceView(binding.surfaceView)
+	    }
 	}
 
 	private var lastFragmentControllerState = com.metallic.chiaki.lib.ControllerState()
