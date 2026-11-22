@@ -27,11 +27,13 @@ import com.metallic.chiaki.touchcontrols.TouchControlsFragment
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import kotlin.math.min
+import android.net.wifi.WifiManager
 
 private sealed class DialogContents
 private object StreamQuitDialog: DialogContents()
 private object CreateErrorDialog: DialogContents()
 private object PinRequestDialog: DialogContents()
+private var wifiLock: WifiManager.WifiLock? = null
 
 class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListener
 {
@@ -49,7 +51,8 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
 		super.onCreate(savedInstanceState)
-
+		window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+		
 		val connectInfo = intent.getParcelableExtra<ConnectInfo>(EXTRA_CONNECT_INFO)
 		if(connectInfo == null)
 		{
@@ -172,19 +175,41 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	{
 		super.onResume()
 		hideSystemUI()
-		if (Preferences(this).debandingEnabled) {
-			binding.debandSurfaceView.onResume()
-		}
-		viewModel.session.resume()
 	}
-
+	
 	override fun onPause()
 	{
-		super.onPause()
-		if (Preferences(this).debandingEnabled) {
-			binding.debandSurfaceView.onPause()
-		}
-		viewModel.session.pause()
+    	super.onPause()   // no longer touches the session
+	}
+
+	override fun onStart()
+	{
+	    super.onStart()
+	    val wm = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
+	    val mode = if(Build.VERSION.SDK_INT >= 29)
+	        WifiManager.WIFI_MODE_FULL_LOW_LATENCY
+	    else
+	        @Suppress("DEPRECATION") WifiManager.WIFI_MODE_FULL_HIGH_PERF
+	    wifiLock = wm.createWifiLock(mode, "chiaki:stream").apply {
+	        setReferenceCounted(false)
+	        acquire()
+	    }
+	    if(Preferences(this).debandingEnabled)
+	        binding.debandSurfaceView.onResume()
+	    viewModel.session.resume()
+	}
+
+	override fun onStop()
+	{
+	    viewModel.session.pause()
+	    if(Preferences(this).debandingEnabled)
+	    {
+	        binding.debandSurfaceView.onPause()
+	        viewModel.session.detachSurface()   // GL surface dies with the context
+	    }
+	    wifiLock?.release()
+	    wifiLock = null
+	    super.onStop()
 	}
 
 	override fun onDestroy()
