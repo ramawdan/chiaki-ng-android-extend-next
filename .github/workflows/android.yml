@@ -19,19 +19,11 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
-      - uses: gradle/actions/setup-gradle@v4
-
       - name: Build debug APK
         working-directory: android
         run: |
-          if [ -f gradlew ]; then
-            chmod +x gradlew
-            ./gradlew assembleDebug --stacktrace
-          else
-            echo "No gradlew found in android/"
-            ls -la
-            exit 1
-          fi
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
