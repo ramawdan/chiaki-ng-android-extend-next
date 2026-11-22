@@ -138,7 +138,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	        binding.debandSurfaceView.holder.setFormat(android.graphics.PixelFormat.RGBA_8888)
 	        binding.debandSurfaceView.setRenderer(debandRenderer)
 	        debandRenderer!!.sharpness = prefs.sharpnessIntensity
-	        debandRenderer!!.frameCallback = { binding.debandSurfaceView.requestRender() }
+	        binding.debandSurfaceView.renderMode = android.opengl.GLSurfaceView.RENDERMODE_CONTINUOUSLY
 	        binding.debandSurfaceView.renderMode = android.opengl.GLSurfaceView.RENDERMODE_WHEN_DIRTY
 	    } else {
 	        // Use standard SurfaceView (no shader processing)
