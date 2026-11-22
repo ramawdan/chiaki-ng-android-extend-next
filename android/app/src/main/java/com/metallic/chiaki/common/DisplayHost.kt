@@ -56,3 +56,22 @@ class ManualDisplayHost(
 
 	override fun toString() = "ManualDisplayHost{${registeredHost}, ${manualHost}}"
 }
+
+class RegisteredDisplayHost(
+	override val registeredHost: RegisteredHost
+): DisplayHost()
+{
+	override val host get() = ""   // no known address; console not currently discovered
+	override val name get() = registeredHost.serverNickname
+	override val id get() = registeredHost.serverMac.toString()
+	override val isPS5: Boolean get() = registeredHost.target.isPS5
+
+	val isOffline get() = true
+
+	override fun equals(other: Any?): Boolean =
+		other is RegisteredDisplayHost && other.registeredHost == registeredHost
+
+	override fun hashCode() = registeredHost.hashCode()
+
+	override fun toString() = "RegisteredDisplayHost{${registeredHost}}"
+}
