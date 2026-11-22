@@ -28,6 +28,7 @@ android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *decoder,
   decoder->target_height = target_height;
   decoder->target_codec = codec;
   decoder->shutdown_output = false;
+  decoder->window = NULL;
   return chiaki_mutex_init(&decoder->codec_mutex, false);
 }
 
