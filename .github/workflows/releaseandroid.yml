@@ -25,6 +25,16 @@ jobs:
           sudo apt-get install -y protobuf-compiler python3-protobuf python3-pip nasm
           pip3 install --user protobuf
 
+      - name: Patch oboe missing assert include
+        run: |
+          cd android/app/src/main/cpp/oboe/src/flowgraph/resampler
+          for f in $(grep -l "assert(" *.cpp *.h 2>/dev/null); do
+            if ! grep -q "include <cassert>" "$f" && ! grep -q "include <assert.h>" "$f"; then
+              sed -i '1i #include <cassert>' "$f"
+              echo "patched $f"
+            fi
+          done
+
       - name: Build release APK
         working-directory: android
         run: |
