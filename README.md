@@ -1,12 +1,9 @@
-# Chiaki for Android (NG)
+# Chiaki for Android (NG) Next
 
 > [!WARNING]
 > This fork has been **completely vibecoded** with the assistance of AI. Use at your own risk. I am absolutely not an expert in video processing stuff.
 
-Chiaki is a free and open-source PlayStation Remote Play client for Android. This is a specialized fork focused on providing the best possible experience on Android devices, with enhanced features and performance.
-
-My main issue with all of the android remote play apps is that they do not support any debanding filters, which is a dealbreaker for me. Only time when gradients are smooth is when HDR is enabled but this is not a good solution for most of android devices due to reduced brightness and some other weird behaviors. So I thought why not spend some time on implementing debanding filters myself and learn more about AI Agent-driven development.
-Basically debanding is already implemented in chiaki-ng for Steam Deck and Windows through libplacebo, but libplacebo is really really not easy to implement for Android, so I decided to try another lightweight approach which is based on GLES Custom Shader. So I spent few evenings to debug and optimize the shader code and finally I got it working! It means now you can play your favorite PS games with smooth gradients and great brightness on your android device!
+Chiaki is a free and open-source PlayStation Remote Play client for Android. This is a specialized fork focused on providing the best possible experience on Android devices, with fix of the occasional missing profile and connection lost.
 
 ## Key Features
 
@@ -52,12 +49,7 @@ To build the project yourself:
    ```
 2. Open the `android/` directory in Android Studio.
 3. Ensure you have the Android NDK and CMake installed.
-4. Build the project using Gradle.
-
-## Upcoming Features (TBD)
-
-- **AMD FidelityFX FSR 1.0**: High-quality upscaling and sharpening (logic integrated into the renderer, UI toggle coming soon).
-- **Customizable Overlays**: More layouts for on-screen controls.
+4. Build the project using Gradle
 
 ## Disclaimer
 
